@@ -1,9 +1,9 @@
 import json, time
 import asyncio
 import websockets
-from decimal import *
+from decimal import Decimal
 
-async def Stream(pairs):
+async def Stream(pairs, database, pairIds):
 	while True:
 		try:
 			async with websockets.connect('wss://ws.kraken.com') as websocket:
@@ -38,6 +38,7 @@ async def Stream(pairs):
 								timestamp = Decimal(obj[1][2])
 								print("Pair: {}; Ask: {}; Bid: {}; Timestamp: {}"
 								      .format(pair, ask, bid, timestamp))
+								database.AddSpreadUpdate(pairIds[pair], ask, bid, timestamp)
 							elif channel["name"] == "trade":
 								price = Decimal(obj[1][0][0])
 								amount = Decimal(obj[1][0][1])
@@ -48,6 +49,8 @@ async def Stream(pairs):
 								print("Pair: {}; Price: {}; Amount: {}; Timestamp: {}; {}; {}; {};"
 								      .format(pair, price, amount, timestamp,
 									      buyOrSell, marketOrLimit, misc))
+								database.AddTrade(pairIds[pair], price, amount, timestamp,
+										  buyOrSell, marketOrLimit, misc)
 
 					except Exception as error:
 						print('Caught this error: ' + repr(error))
@@ -56,5 +59,3 @@ async def Stream(pairs):
 		except Exception as error:
 			print('Caught this error: ' + repr(error))
 			time.sleep(3)
-
-asyncio.get_event_loop().run_until_complete(Stream(["XBT/EUR", "ETH/EUR"]))
