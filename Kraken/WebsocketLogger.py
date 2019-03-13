@@ -62,16 +62,22 @@ async def Stream(pairs, database, pairIds):
 
 					except Exception as error:
 						print('Caught this error: ' + repr(error))
-						try:
-							database.LogError(repr(error))
-						except Exception as innerError:
-							print('Caught this error while handling previous error: ' + repr(innerError))
+						while True:
+							try:
+								database.LogError(repr(error))
+								break
+							except Exception as innerError:
+								print('Caught this error while handling original error: ' + repr(innerError))
+								time.sleep(3)
 						time.sleep(3)
 						break
 		except Exception as error:
 			print('Caught this error: ' + repr(error))
-			try:
-				database.LogError(repr(error))
-			except Exception as innerError:
-				print('Caught this error while handling previous error: ' + repr(innerError))
+			while True:
+				try:
+					database.LogError(repr(error))
+					break
+				except Exception as innerError:
+					print('Caught this error while handling original error: ' + repr(innerError))
+					time.sleep(3)
 			time.sleep(3)
