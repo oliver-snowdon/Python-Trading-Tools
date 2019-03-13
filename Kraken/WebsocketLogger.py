@@ -44,8 +44,8 @@ async def Stream(pairs, database, pairIds):
 								bid = Decimal(obj[1][0])
 								ask = Decimal(obj[1][1])
 								timestamp = Decimal(obj[1][2])
-								print("Pair: {}; Ask: {}; Bid: {}; Timestamp: {}"
-								      .format(pair, ask, bid, timestamp))
+								#print("Pair: {}; Ask: {}; Bid: {}; Timestamp: {}"
+								#      .format(pair, ask, bid, timestamp))
 								database.AddSpreadUpdate(pairIds[pair], ask, bid, timestamp)
 							elif channel["name"] == "trade":
 								price = Decimal(obj[1][0][0])
@@ -54,9 +54,9 @@ async def Stream(pairs, database, pairIds):
 								buyOrSell = obj[1][0][3]
 								marketOrLimit = obj[1][0][4]
 								misc = obj[1][0][5]
-								print("Pair: {}; Price: {}; Amount: {}; Timestamp: {}; {}; {}; {};"
-								      .format(pair, price, amount, timestamp,
-									      buyOrSell, marketOrLimit, misc))
+								#print("Pair: {}; Price: {}; Amount: {}; Timestamp: {}; {}; {}; {};"
+								#      .format(pair, price, amount, timestamp,
+								#	      buyOrSell, marketOrLimit, misc))
 								database.AddTrade(pairIds[pair], price, amount, timestamp,
 										  buyOrSell, marketOrLimit, misc)
 
