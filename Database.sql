@@ -34,11 +34,24 @@ CREATE TABLE `pairs` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `runs`
+--
+
+CREATE TABLE `runs` (
+  `id` int(11) NOT NULL,
+  `node` text NOT NULL,
+  `error` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `spreads`
 --
 
 CREATE TABLE `spreads` (
   `id` int(11) NOT NULL,
+  `run_id` int(11) NOT NULL,
   `pair_id` int(11) NOT NULL,
   `ask` decimal(15,5) NOT NULL,
   `bid` decimal(15,5) NOT NULL,
@@ -53,6 +66,7 @@ CREATE TABLE `spreads` (
 
 CREATE TABLE `trades` (
   `id` int(11) NOT NULL,
+  `run_id` int(11) NOT NULL,
   `pair_id` int(11) NOT NULL,
   `price` decimal(15,5) NOT NULL,
   `amount` decimal(18,8) NOT NULL,
@@ -74,6 +88,12 @@ ALTER TABLE `pairs`
   ADD UNIQUE KEY `pair` (`pair`);
 
 --
+-- Indexes for table `runs`
+--
+ALTER TABLE `runs`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `spread_streams`
 --
 ALTER TABLE `spreads`
@@ -93,6 +113,11 @@ ALTER TABLE `trades`
 -- AUTO_INCREMENT for table `pairs`
 --
 ALTER TABLE `pairs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `runs`
+--
+ALTER TABLE `runs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `spread_streams`

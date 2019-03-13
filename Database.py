@@ -8,6 +8,7 @@ class Database:
 						   password=Config.password,
 						   host=Config.host,
 						   database=Config.database)
+		self.runId = -1
 
 	def SetupDatabase(self):
 		cursor = self.cnx.cursor()
@@ -32,17 +33,27 @@ class Database:
 				self.cnx.commit()
 				pairIds[pair] = cursor.lastrowid
 		return pairIds
-
+		
+	def StartRun(self):
+		cursor.execute('INSERT INTO `runs` (`node`) VALUES ("localhost");')
+		self.cnx.commit()
+		self.runId = cursor.lastrowid
+		
+	def LogError(self, error):
+		cursor.execute('UPDATE `runs` SET `error` = %s WHERE id = %d;', error, self.runId)
+		self.cnx.commit()
+		self.StartRun()
+	
 	def AddSpreadUpdate(self, pairId, ask, bid, timestamp):
 		cursor = self.cnx.cursor()
-		cursor.execute('INSERT INTO `spreads` (`pair_id`, `ask`, `bid`, `timestamp`) VALUES ({}, {}, {}, {});'
-			       .format(pairId, ask, bid, timestamp))
+		cursor.execute('INSERT INTO `spreads` (`pair_id`, `run_id`, `ask`, `bid`, `timestamp`) VALUES ({}, {}, {}, {}, {});'
+			       .format(pairId, self.runId, ask, bid, timestamp))
 		self.cnx.commit()
 
 	def AddTrade(self, pairId, price, amount, timestamp, buyOrSell, marketOrLimit, misc):
 		cursor = self.cnx.cursor()
-		cursor.execute('INSERT INTO `trades` (`pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES ({}, {}, {}, {}, "{}", "{}", "{}");'
-			       .format(pairId, price, amount, timestamp, buyOrSell, marketOrLimit, misc))
+		cursor.execute('INSERT INTO `trades` (`pair_id`, `run_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES ({}, {}, {}, {}, {}, "{}", "{}", "{}");'
+			       .format(pairId, self.runId, price, amount, timestamp, buyOrSell, marketOrLimit, misc))
 		self.cnx.commit()
 
 	def CountSpreads(self, pairId, startTimestamp, timestampUpTo):

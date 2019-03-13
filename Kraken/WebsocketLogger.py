@@ -6,6 +6,14 @@ from decimal import Decimal
 async def Stream(pairs, database, pairIds):
 	while True:
 		try:
+			database.StartRun()
+			break
+		except Exception as error:
+			print('Caught this error while starting: ' + repr(error))
+			time.sleep(3)
+
+	while True:
+		try:
 			async with websockets.connect('wss://ws.kraken.com') as websocket:
 
 				for pair in pairs:
@@ -54,8 +62,16 @@ async def Stream(pairs, database, pairIds):
 
 					except Exception as error:
 						print('Caught this error: ' + repr(error))
+						try:
+							database.LogError(repr(error))
+						except Exception as innerError:
+							print('Caught this error while handling previous error: ' + repr(innerError))
 						time.sleep(3)
 						break
 		except Exception as error:
 			print('Caught this error: ' + repr(error))
+			try:
+				database.LogError(repr(error))
+			except Exception as innerError:
+				print('Caught this error while handling previous error: ' + repr(innerError))
 			time.sleep(3)
