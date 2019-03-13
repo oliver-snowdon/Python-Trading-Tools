@@ -105,7 +105,7 @@ ALTER TABLE `spreads`
 -- Indexes for table `trades`
 --
 ALTER TABLE `trades`
-  ADD KEY `id` (`id`),
+  ADD PRIMARY KEY `id` (`id`),
   ADD KEY `run_id` (`run_id`),
   ADD KEY `timestamp` (`timestamp`);
 
