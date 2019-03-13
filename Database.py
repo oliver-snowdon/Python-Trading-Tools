@@ -35,11 +35,13 @@ class Database:
 		return pairIds
 		
 	def StartRun(self):
+		cursor = self.cnx.cursor()
 		cursor.execute('INSERT INTO `runs` (`node`) VALUES ("localhost");')
 		self.cnx.commit()
 		self.runId = cursor.lastrowid
 		
 	def LogError(self, error):
+		cursor = self.cnx.cursor()
 		cursor.execute("UPDATE `runs` SET `error` = %s WHERE id = %d;", (error, self.runId))
 		self.cnx.commit()
 		self.StartRun()
