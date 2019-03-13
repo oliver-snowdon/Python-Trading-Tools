@@ -63,6 +63,7 @@ class Database:
 		self.cnx.commit()
 
 	def GetRunRange(self, runId):
+		self.cnx.commit()
 		cursor = self.cnx.cursor()
 		cursor.execute("SELECT COUNT(1) FROM `spreads` WHERE `run_id` = %s", (runId,))
 		nSpreads = cursor.fetchone()[0]
@@ -92,6 +93,7 @@ class Database:
 			return 0, 0
 
 	def GetLocalOverlappingRun(self, interruptionStart, interruptionEnd):
+		self.cnx.commit()
 		cursor = self.cnx.cursor(buffered=True)
 		cursor.execute('SELECT `id` FROM `runs` WHERE `node` = "localhost";')
 		result = -1
@@ -118,20 +120,20 @@ class Database:
 		self.cnx.commit()
 		return result
 
-	def GetSpreads(self, pairId, startTimestamp, timestampUpTo):
+	def GetSpreads(self, runId, pairId, startTimestamp, timestampUpTo):
 		cursor = self.cnx.cursor()
-		cursor.execute('SELECT `ask`, `bid`, `timestamp` FROM `spreads` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {};'
-			       .format(startTimestamp, timestampUpTo, pairId))
+		cursor.execute('SELECT `ask`, `bid`, `timestamp` FROM `spreads` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {};'
+			       .format(startTimestamp, timestampUpTo, pairId, runId))
 		result = []
 		for row in cursor:
 			result.append({'ask': str(row[0]), 'bid': str(row[1]), 'timestamp': str(row[2])})
 		self.cnx.commit()
 		return result
 
-	def GetTrades(self, pairId, startTimestamp, timestampUpTo):
+	def GetTrades(self, runId, pairId, startTimestamp, timestampUpTo):
 		cursor = self.cnx.cursor()
-		cursor.execute('SELECT `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc` FROM `trades` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {};'
-			       .format(startTimestamp, timestampUpTo, pairId))
+		cursor.execute('SELECT `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc` FROM `trades` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {};'
+			       .format(startTimestamp, timestampUpTo, pairId, runId))
 		result = []
 		for row in cursor:
 			result.append({'price': str(row[0]), 'amount': str(row[1]), 'timestamp': str(row[2]),

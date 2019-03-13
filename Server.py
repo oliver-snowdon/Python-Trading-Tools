@@ -25,23 +25,23 @@ def GetTradeCount(pair, timestampStart, timestampUpTo):
 		abort(404)
 	return jsonify(database.CountTrades(pairIds[pair], timestampStart, timestampUpTo))
 
-@app.route('/spreads/<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
-def GetSpreads(pair, timestampStart, timestampUpTo):
+@app.route('/spreads/<int:runId>&<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
+def GetSpreads(runId, pair, timestampStart, timestampUpTo):
 	pair = pair.replace('.', '/')
 	if pair not in pairIds:
 		abort(404)
 	if timestampStart >= timestampUpTo:
 		abort(404)
-	return jsonify(database.GetSpreads(pairIds[pair], timestampStart, timestampUpTo))
+	return jsonify(database.GetSpreads(runId, pairIds[pair], timestampStart, timestampUpTo))
 
-@app.route('/trades/<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
-def GetTrades(pair, timestampStart, timestampUpTo):
+@app.route('/trades/<int:runId>&<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
+def GetTrades(runId, pair, timestampStart, timestampUpTo):
 	pair = pair.replace('.', '/')
 	if pair not in pairIds:
 		abort(404)
 	if timestampStart >= timestampUpTo:
 		abort(404)
-	return jsonify(database.GetTrades(pairIds[pair], timestampStart, timestampUpTo))
+	return jsonify(database.GetTrades(runId, pairIds[pair], timestampStart, timestampUpTo))
 
 @app.route('/runs/<int:interruptionStart>&<int:interruptionEnd>', methods=['GET'])
 def GetLocalOverlappingRun(interruptionStart, interruptionEnd):
