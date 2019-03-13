@@ -25,11 +25,11 @@ class Database:
 		cursor = self.cnx.cursor()
 		pairIds = dict()
 		for pair in pairs:
-			cursor.execute('SELECT `id` FROM `pairs` WHERE `pair` = "{}"'.format(pair))
+			cursor.execute('SELECT `id` FROM `pairs` WHERE `pair` = %s;', pair)
 			for row in cursor:
 				pairIds[pair] = row[0]
 			if pair not in pairIds:
-				cursor.execute('INSERT INTO `pairs` (`pair`) VALUES ("{}");'.format(pair))
+				cursor.execute('INSERT INTO `pairs` (`pair`) VALUES (%s);', pair)
 				self.cnx.commit()
 				pairIds[pair] = cursor.lastrowid
 		return pairIds
@@ -52,8 +52,8 @@ class Database:
 
 	def AddTrade(self, pairId, price, amount, timestamp, buyOrSell, marketOrLimit, misc):
 		cursor = self.cnx.cursor()
-		cursor.execute('INSERT INTO `trades` (`pair_id`, `run_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES ({}, {}, {}, {}, {}, "{}", "{}", "{}");'
-			       .format(pairId, self.runId, price, amount, timestamp, buyOrSell, marketOrLimit, misc))
+		cursor.execute('INSERT INTO `trades` (`pair_id`, `run_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES ({}, {}, {}, {}, {}, %s, %s, %s);'
+			       .format(pairId, self.runId, price, amount, timestamp), buyOrSell, marketOrLimit, misc)
 		self.cnx.commit()
 
 	def CountSpreads(self, pairId, startTimestamp, timestampUpTo):
