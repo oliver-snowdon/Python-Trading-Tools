@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 11, 2019 at 10:00 PM
+-- Generation Time: Mar 13, 2019 at 08:16 PM
 -- Server version: 5.7.25-0ubuntu0.18.04.2
 -- PHP Version: 7.2.15-0ubuntu0.18.04.1
 
@@ -94,16 +94,20 @@ ALTER TABLE `runs`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `spread_streams`
+-- Indexes for table `spreads`
 --
 ALTER TABLE `spreads`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `run_id` (`run_id`),
+  ADD KEY `timestamp` (`timestamp`);
 
 --
 -- Indexes for table `trades`
 --
 ALTER TABLE `trades`
-  ADD KEY `id` (`id`);
+  ADD KEY `id` (`id`),
+  ADD KEY `run_id` (`run_id`),
+  ADD KEY `timestamp` (`timestamp`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -120,7 +124,7 @@ ALTER TABLE `pairs`
 ALTER TABLE `runs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
--- AUTO_INCREMENT for table `spread_streams`
+-- AUTO_INCREMENT for table `spreads`
 --
 ALTER TABLE `spreads`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
