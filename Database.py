@@ -4,11 +4,14 @@ import Config
 class Database:
 
 	def __init__(self):
+		self.Connect()
+		self.runId = -1
+
+	def Connect(self):
 		self.cnx = mysql.connector.connect(user=Config.user,
 						   password=Config.password,
 						   host=Config.host,
 						   database=Config.database)
-		self.runId = -1
 
 	def SetupDatabase(self):
 		cursor = self.cnx.cursor()
@@ -41,6 +44,7 @@ class Database:
 		self.runId = cursor.lastrowid
 		
 	def LogError(self, error):
+		self.Connect()
 		cursor = self.cnx.cursor()
 		cursor.execute("UPDATE `runs` SET `error` = %s WHERE id = %d;", (error, self.runId))
 		self.cnx.commit()
@@ -57,6 +61,46 @@ class Database:
 		cursor.execute("INSERT INTO `trades` (`pair_id`, `run_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES ({}, {}, {}, {}, {}, %s, %s, %s);"
 			       .format(pairId, self.runId, price, amount, timestamp), (buyOrSell, marketOrLimit, misc))
 		self.cnx.commit()
+
+	def GetRunRange(self, runId):
+		cursor = self.cnx.cursor()
+		cursor.execute("SELECT COUNT(1) FROM `spreads` WHERE `run_id` = %s", (runId,))
+		nSpreads = cursor.fetchone()[0]
+		minSpreadTimestamp = None
+		maxSpreadTimestamp = None
+		if nSpreads > 0:
+			cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM `spreads` WHERE `run_id` = %s;", (runId,))
+			row = cursor.fetchone()
+			minSpreadTimestamp = row[0]
+			maxSpreadTimestamp = row[1]
+		cursor.execute("SELECT COUNT(1) FROM `trades` WHERE `run_id` = %s", (runId,))
+		nTrades = cursor.fetchone()[0]
+		minTradeTimestamp = None
+		maxTradeTimestamp = None
+		if nSpreads > 0:
+			cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM `trades` WHERE `run_id` = %s;", (runId,))
+			row = cursor.fetchone()
+			minTradeTimestamp = row[0]
+			maxTradeTimestamp = row[1]
+		if minSpreadTimestamp != None and minTradeTimestamp != None:
+			return min(minSpreadTimestamp, minTradeTimestamp), max(maxSpreadTimestamp, maxTradeTimestamp)
+		elif minSpreadTimestamp:
+			return minSpreadTimestamp, maxSpreadTimestamp
+		elif minTradeTimestamp:
+			return minTradeTimestamp, maxTradeTimestamp
+		else:
+			return 0, 0
+
+	def GetLocalOverlappingRun(self, interruptionStart, interruptionEnd):
+		cursor = self.cnx.cursor(buffered=True)
+		cursor.execute('SELECT `id` FROM `runs` WHERE `node` = "localhost";')
+		result = -1
+		for row in cursor:
+			runId = row[0]
+			runStart, runEnd = self.GetRunRange(runId)
+			if result < 0 and runStart < interruptionStart and runEnd > interruptionEnd:
+				result = runId
+		return result
 
 	def CountSpreads(self, pairId, startTimestamp, timestampUpTo):
 		cursor = self.cnx.cursor()
