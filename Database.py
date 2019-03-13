@@ -36,7 +36,7 @@ class Database:
 		
 	def StartRun(self):
 		cursor = self.cnx.cursor()
-		cursor.execute('INSERT INTO `runs` (`node`) VALUES ("localhost");')
+		cursor.execute('INSERT INTO `runs` (`node`, `error`) VALUES ("localhost", "");')
 		self.cnx.commit()
 		self.runId = cursor.lastrowid
 		
