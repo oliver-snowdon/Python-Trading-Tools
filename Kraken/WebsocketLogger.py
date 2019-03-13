@@ -1,6 +1,7 @@
 import json, time
 import asyncio
 import websockets
+import sys
 from decimal import Decimal
 
 async def Stream(pairs, database, pairIds):
@@ -10,6 +11,7 @@ async def Stream(pairs, database, pairIds):
 			break
 		except Exception as error:
 			print('Caught this error while starting: ' + repr(error))
+			sys.stdout.flush()
 			time.sleep(3)
 
 	while True:
@@ -62,22 +64,26 @@ async def Stream(pairs, database, pairIds):
 
 					except Exception as error:
 						print('Caught this error: ' + repr(error))
+						sys.stdout.flush()
 						while True:
 							try:
 								database.LogError(repr(error))
 								break
 							except Exception as innerError:
 								print('Caught this error while handling original error: ' + repr(innerError))
+								sys.stdout.flush()
 								time.sleep(3)
 						time.sleep(3)
 						break
 		except Exception as error:
 			print('Caught this error: ' + repr(error))
+			sys.stdout.flush()
 			while True:
 				try:
 					database.LogError(repr(error))
 					break
 				except Exception as innerError:
 					print('Caught this error while handling original error: ' + repr(innerError))
+					sys.stdout.flush()
 					time.sleep(3)
 			time.sleep(3)

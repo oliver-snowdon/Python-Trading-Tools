@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from Kraken import WebsocketLogger
 from Database import Database
 import time
@@ -13,6 +14,7 @@ while True:
 		break
 	except Exception as error:
 		print('Caught this error while opening database: ' + repr(error))
+		sys.stdout.flush()
 		time.sleep(3)
 
 asyncio.get_event_loop().run_until_complete(WebsocketLogger.Stream(pairs, database, pairIds))
