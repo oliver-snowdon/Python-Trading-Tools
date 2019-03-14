@@ -46,7 +46,7 @@ class Database:
 	def LogError(self, error):
 		self.Connect()
 		cursor = self.cnx.cursor()
-		cursor.execute("UPDATE `runs` SET `error` = %s WHERE id = %d;", (error, self.runId))
+		cursor.execute("UPDATE `runs` SET `error` = %s WHERE id = %s;", (error, self.runId))
 		self.cnx.commit()
 		self.StartRun()
 	
