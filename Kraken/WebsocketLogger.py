@@ -18,14 +18,14 @@ async def Stream(pairs, database, pairIds):
 		try:
 			async with websockets.connect('wss://ws.kraken.com') as websocket:
 
-				for pair in pairs:
-					await websocket.send(json.dumps({"event": "subscribe",
-									 "pair": [pair],
-									 "subscription": {"name": "spread"}}))
+				await websocket.send(json.dumps({"event": "subscribe",
+								 "pair": pairs,
+								 "subscription": {"name": "spread"}}))
 
-					await websocket.send(json.dumps({"event": "subscribe",
-									 "pair": [pair],
-									 "subscription": {"name": "trade"}}))
+				await websocket.send(json.dumps({"event": "subscribe",
+								 "pair": pairs,
+								 "subscription": {"name": "trade"}}))
+
 
 				channelDict = dict()
 
@@ -34,6 +34,8 @@ async def Stream(pairs, database, pairIds):
 						data = await websocket.recv()
 						obj = json.loads(data)
 						if isinstance(obj, dict):
+							if "error" in obj and obj["error"] != "":
+								raise Exception("error: {}".format(obj["error"]))
 							if "event" in obj and obj["event"] == "subscriptionStatus":
 								subscriptionName = obj["subscription"]["name"]
 								channelDict[obj["channelID"]] = {"pair":obj["pair"],
