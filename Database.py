@@ -105,32 +105,33 @@ class Database:
 		return result
 
 	def CountSpreads(self, pairId, startTimestamp, timestampUpTo):
+		self.cnx.commit()
 		cursor = self.cnx.cursor()
 		cursor.execute('SELECT COUNT(1) FROM `spreads` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {};'
 			       .format(startTimestamp, timestampUpTo, pairId))
 		result = cursor.fetchone()[0]
-		self.cnx.commit()
 		return result
 
 	def CountTrades(self, pairId, startTimestamp, timestampUpTo):
+		self.cnx.commit()
 		cursor = self.cnx.cursor()
 		cursor.execute('SELECT COUNT(1) FROM `trades` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {};'
 			       .format(startTimestamp, timestampUpTo, pairId))
 		result = cursor.fetchone()[0]
-		self.cnx.commit()
 		return result
 
 	def GetSpreads(self, runId, pairId, startTimestamp, timestampUpTo):
+		self.cnx.commit()
 		cursor = self.cnx.cursor()
 		cursor.execute('SELECT `ask`, `bid`, `timestamp` FROM `spreads` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {};'
 			       .format(startTimestamp, timestampUpTo, pairId, runId))
 		result = []
 		for row in cursor:
 			result.append({'ask': str(row[0]), 'bid': str(row[1]), 'timestamp': str(row[2])})
-		self.cnx.commit()
 		return result
 
 	def GetTrades(self, runId, pairId, startTimestamp, timestampUpTo):
+		self.cnx.commit()
 		cursor = self.cnx.cursor()
 		cursor.execute('SELECT `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc` FROM `trades` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {};'
 			       .format(startTimestamp, timestampUpTo, pairId, runId))
@@ -138,5 +139,4 @@ class Database:
 		for row in cursor:
 			result.append({'price': str(row[0]), 'amount': str(row[1]), 'timestamp': str(row[2]),
 				       'buy_or_sell': row[3], 'market_or_limit': row[4], 'misc': row[5]})
-		self.cnx.commit()
 		return result
