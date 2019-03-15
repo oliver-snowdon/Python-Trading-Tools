@@ -28,7 +28,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `pairs` (
   `id` int(11) NOT NULL,
-  `pair` varchar(7) NOT NULL
+  `pair` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
