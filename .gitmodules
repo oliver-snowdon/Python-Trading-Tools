@@ -1,0 +1,3 @@
+[submodule "Kraken/python3-krankenex"]
+	path = Kraken/python3-krankenex
+	url = https://github.com/oliver-snowdon/python3-krakenex.git
