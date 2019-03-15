@@ -1,10 +1,10 @@
 import asyncio
 import sys
-from Kraken import WebsocketLogger
+from Kraken import WebsocketLogger, RESTInterface
 from Database import Database
 import time
 
-pairs = ["XBT/EUR", "ETH/EUR"]
+pairs = RESTInterface.GetPairs()
 
 while True:
 	try:

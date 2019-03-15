@@ -34,7 +34,7 @@ async def Stream(pairs, database, pairIds):
 						data = await websocket.recv()
 						obj = json.loads(data)
 						if isinstance(obj, dict):
-							if obj["event"] == "subscriptionStatus":
+							if "event" in obj and obj["event"] == "subscriptionStatus":
 								subscriptionName = obj["subscription"]["name"]
 								channelDict[obj["channelID"]] = {"pair":obj["pair"],
 												 "name":subscriptionName}
@@ -64,6 +64,8 @@ async def Stream(pairs, database, pairIds):
 
 					except Exception as error:
 						print('Caught this error: ' + repr(error))
+						sys.stdout.flush()
+						print('Data was '.format(data))
 						sys.stdout.flush()
 						while True:
 							try:
