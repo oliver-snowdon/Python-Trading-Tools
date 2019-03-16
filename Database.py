@@ -71,6 +71,49 @@ class Database:
 		firstTimestamp, lastTimestamp = cursor.fetchone()
 		return firstTimestamp, lastTimestamp
 
+	def CalculateRunRange(self, runId, cursor=None):
+		if cursor == None:
+			self.cnx.commit()
+			cursor = self.cnx.cursor()
+		cursor.execute("SELECT COUNT(1) FROM `spreads` WHERE `run_id` = %s", (runId,))
+		nSpreads = cursor.fetchone()[0]
+		minSpreadTimestamp = None
+		maxSpreadTimestamp = None
+		if nSpreads > 0:
+			cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM `spreads` WHERE `run_id` = %s;", (runId,))
+			row = cursor.fetchone()
+			minSpreadTimestamp = row[0]
+			maxSpreadTimestamp = row[1]
+		cursor.execute("SELECT COUNT(1) FROM `trades` WHERE `run_id` = %s", (runId,))
+		nTrades = cursor.fetchone()[0]
+		minTradeTimestamp = None
+		maxTradeTimestamp = None
+		if nSpreads > 0:
+			cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM `trades` WHERE `run_id` = %s;", (runId,))
+			row = cursor.fetchone()
+			minTradeTimestamp = row[0]
+			maxTradeTimestamp = row[1]
+		if minSpreadTimestamp != None and minTradeTimestamp != None:
+			return min(minSpreadTimestamp, minTradeTimestamp), max(maxSpreadTimestamp, maxTradeTimestamp)
+		elif minSpreadTimestamp:
+			return minSpreadTimestamp, maxSpreadTimestamp
+		elif minTradeTimestamp:
+			return minTradeTimestamp, maxTradeTimestamp
+		else:
+			return 0, 0
+
+	def SyncRunStats(self):
+		self.cnx.commit()
+		cursor = self.cnx.cursor(buffered=True)
+		cursor.execute('SELECT `id`, `first_timestamp`, `last_timestamp` FROM `runs` WHERE `node` = "localhost";')
+		for row in cursor:
+			if row[1] == None and row[2] == None:
+				start, end = self.CalculateRunRange(row[0])
+				updateCursor = self.cnx.cursor()
+				updateCursor.execute("UPDATE `runs` SET `first_timestamp` = {}, `last_timestamp` = {} WHERE `id` = {}"
+						     .format(start, end, row[0]))
+		self.cnx.commit()
+
 	def UpdateRunStats(self, runId, activityTimestamp):
 		cursor = self.cnx.cursor()
 		cursor.execute("SELECT `first_timestamp`, `last_timestamp` FROM `runs` WHERE `id` = {}".format(runId))
