@@ -7,7 +7,7 @@ from decimal import Decimal
 async def Stream(pairs, database, pairIds):
 	while True:
 		try:
-			database.StartRun()
+			database.StartRun(list(pairIds.keys()))
 			break
 		except Exception as error:
 			print('Caught this error while starting: ' + repr(error))
@@ -71,7 +71,7 @@ async def Stream(pairs, database, pairIds):
 						sys.stdout.flush()
 						while True:
 							try:
-								database.LogError(repr(error))
+								database.LogError(repr(error), list(pairIds.keys()))
 								break
 							except Exception as innerError:
 								print('Caught this error while handling original error: ' + repr(innerError))
@@ -84,7 +84,7 @@ async def Stream(pairs, database, pairIds):
 			sys.stdout.flush()
 			while True:
 				try:
-					database.LogError(repr(error))
+					database.LogError(repr(error), list(pairIds.keys()))
 					break
 				except Exception as innerError:
 					print('Caught this error while handling original error: ' + repr(innerError))

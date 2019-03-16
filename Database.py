@@ -1,6 +1,7 @@
 import mysql.connector
 import Config
 import sys
+import json
 
 class Database:
 
@@ -38,18 +39,18 @@ class Database:
 				pairIds[pair] = cursor.lastrowid
 		return pairIds
 		
-	def StartRun(self):
+	def StartRun(self, pairs):
 		cursor = self.cnx.cursor()
-		cursor.execute('INSERT INTO `runs` (`node`, `error`) VALUES ("localhost", "");')
+		cursor.execute('INSERT INTO `runs` (`node`, `error`, `pairs`) VALUES ("localhost", "", %s);', (json.dumps(pairs),))
 		self.cnx.commit()
 		self.runId = cursor.lastrowid
 		
-	def LogError(self, error):
+	def LogError(self, error, pairs):
 		self.Connect()
 		cursor = self.cnx.cursor()
 		cursor.execute("UPDATE `runs` SET `error` = %s WHERE id = %s;", (error, self.runId))
 		self.cnx.commit()
-		self.StartRun()
+		self.StartRun(pairs)
 	
 	def AddSpreadUpdate(self, pairId, ask, bid, timestamp):
 		cursor = self.cnx.cursor()

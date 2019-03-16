@@ -40,6 +40,8 @@ CREATE TABLE `pairs` (
 CREATE TABLE `runs` (
   `id` int(11) NOT NULL,
   `node` text NOT NULL,
+  `remote_run_id` int(11) NOT NULL DEFAULT '-1',
+  `pairs` text NOT NULL,
   `first_timestamp` decimal(16,6) DEFAULT NULL,
   `last_timestamp` decimal(16,6) DEFAULT NULL,
   `error` text NOT NULL
