@@ -1,5 +1,6 @@
 import mysql.connector
 import Config
+import sys
 
 class Database:
 
@@ -55,42 +56,32 @@ class Database:
 		cursor.execute('INSERT INTO `spreads` (`pair_id`, `run_id`, `ask`, `bid`, `timestamp`) VALUES ({}, {}, {}, {}, {});'
 			       .format(pairId, self.runId, ask, bid, timestamp))
 		self.cnx.commit()
+		self.UpdateRunStats(self.runId, timestamp)
 
 	def AddTrade(self, pairId, price, amount, timestamp, buyOrSell, marketOrLimit, misc):
 		cursor = self.cnx.cursor()
 		cursor.execute("INSERT INTO `trades` (`pair_id`, `run_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES ({}, {}, {}, {}, {}, %s, %s, %s);"
 			       .format(pairId, self.runId, price, amount, timestamp), (buyOrSell, marketOrLimit, misc))
 		self.cnx.commit()
+		self.UpdateRunStats(self.runId, timestamp)
 
 	def GetRunRange(self, runId):
-		self.cnx.commit()
 		cursor = self.cnx.cursor()
-		cursor.execute("SELECT COUNT(1) FROM `spreads` WHERE `run_id` = %s", (runId,))
-		nSpreads = cursor.fetchone()[0]
-		minSpreadTimestamp = None
-		maxSpreadTimestamp = None
-		if nSpreads > 0:
-			cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM `spreads` WHERE `run_id` = %s;", (runId,))
-			row = cursor.fetchone()
-			minSpreadTimestamp = row[0]
-			maxSpreadTimestamp = row[1]
-		cursor.execute("SELECT COUNT(1) FROM `trades` WHERE `run_id` = %s", (runId,))
-		nTrades = cursor.fetchone()[0]
-		minTradeTimestamp = None
-		maxTradeTimestamp = None
-		if nSpreads > 0:
-			cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM `trades` WHERE `run_id` = %s;", (runId,))
-			row = cursor.fetchone()
-			minTradeTimestamp = row[0]
-			maxTradeTimestamp = row[1]
-		if minSpreadTimestamp != None and minTradeTimestamp != None:
-			return min(minSpreadTimestamp, minTradeTimestamp), max(maxSpreadTimestamp, maxTradeTimestamp)
-		elif minSpreadTimestamp:
-			return minSpreadTimestamp, maxSpreadTimestamp
-		elif minTradeTimestamp:
-			return minTradeTimestamp, maxTradeTimestamp
+		cursor.execute("SELECT `first_timestamp`, `last_timestamp` FROM `runs` WHERE `id` = {}".format(runId))
+		firstTimestamp, lastTimestamp = cursor.fetchone()
+		return firstTimestamp, lastTimestamp
+
+	def UpdateRunStats(self, runId, activityTimestamp):
+		cursor = self.cnx.cursor()
+		cursor.execute("SELECT `first_timestamp`, `last_timestamp` FROM `runs` WHERE `id` = {}".format(runId))
+		firstTimestamp, lastTimestamp = cursor.fetchone()
+		if firstTimestamp == None:
+			cursor.execute("UPDATE `runs` SET `first_timestamp` = {}, `last_timestamp` = {} WHERE `id` = {}"
+				       .format(activityTimestamp, activityTimestamp, runId))
 		else:
-			return 0, 0
+			cursor.execute("UPDATE `runs` SET `last_timestamp` = {} WHERE `id` = {}"
+				       .format(activityTimestamp, runId))
+		self.cnx.commit()
 
 	def GetLocalOverlappingRun(self, interruptionStart, interruptionEnd):
 		self.cnx.commit()
@@ -102,6 +93,20 @@ class Database:
 			runStart, runEnd = self.GetRunRange(runId)
 			if result < 0 and runStart < interruptionStart and runEnd > interruptionEnd:
 				result = runId
+		return result
+
+	def GetNonEmptyLocalRuns(self):
+		self.cnx.commit()
+		cursor = self.cnx.cursor(buffered=True)
+		cursor.execute('SELECT `id` FROM `runs` WHERE `node` = "localhost";')
+		result = []
+		for row in cursor:
+			runId = row[0]
+			runStart, runEnd = self.GetRunRange(runId)
+			if runStart != None and runEnd != None:
+				result.append({"id":runId, "start":str(runStart), "end":str(runEnd)})
+			print(runId)
+			sys.stdout.flush()
 		return result
 
 	def CountSpreads(self, pairId, startTimestamp, timestampUpTo):
@@ -123,7 +128,7 @@ class Database:
 	def GetSpreads(self, runId, pairId, startTimestamp, timestampUpTo):
 		self.cnx.commit()
 		cursor = self.cnx.cursor()
-		cursor.execute('SELECT `ask`, `bid`, `timestamp` FROM `spreads` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {};'
+		cursor.execute('SELECT `ask`, `bid`, `timestamp` FROM `spreads` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {} ORDER BY `timestamp` ASC;'
 			       .format(startTimestamp, timestampUpTo, pairId, runId))
 		result = []
 		for row in cursor:
@@ -133,7 +138,7 @@ class Database:
 	def GetTrades(self, runId, pairId, startTimestamp, timestampUpTo):
 		self.cnx.commit()
 		cursor = self.cnx.cursor()
-		cursor.execute('SELECT `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc` FROM `trades` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {};'
+		cursor.execute('SELECT `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc` FROM `trades` WHERE timestamp >= {} AND timestamp < {} AND `pair_id` = {} AND `run_id` = {} ORDER BY `timestamp` ASC;'
 			       .format(startTimestamp, timestampUpTo, pairId, runId))
 		result = []
 		for row in cursor:

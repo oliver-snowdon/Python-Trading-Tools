@@ -52,10 +52,16 @@ def GetTrades(runId, pair, timestampStart, timestampUpTo):
 @app.route('/runs/<int:interruptionStart>&<int:interruptionEnd>', methods=['GET'])
 def GetLocalOverlappingRun(interruptionStart, interruptionEnd):
 	database = Database()
-	pairIds = database.GetPairIds(pairs)
 	if interruptionStart >= interruptionEnd:
 		abort(404)
 	return jsonify(database.GetLocalOverlappingRun(interruptionStart, interruptionEnd))
+
+@app.route('/runs', methods=['GET'])
+def GetNonEmptyLocalRuns():
+	database = Database()
+	result = database.GetNonEmptyLocalRuns()
+	print(result)
+	return jsonify(result)
 
 # https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
 @app.after_request
