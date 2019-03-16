@@ -4,11 +4,11 @@ from Database import Database
 pairs = ["XBT/EUR", "ETH/EUR"]
 
 app = Flask(__name__)
-database = Database()
-pairIds = database.GetPairIds(pairs)
 
 @app.route('/spreads/count/<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
 def GetSpreadCount(pair, timestampStart, timestampUpTo):
+	database = Database()
+	pairIds = database.GetPairIds(pairs)
 	pair = pair.replace('.', '/')
 	if pair not in pairIds:
 		abort(404)
@@ -18,6 +18,8 @@ def GetSpreadCount(pair, timestampStart, timestampUpTo):
 
 @app.route('/trades/count/<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
 def GetTradeCount(pair, timestampStart, timestampUpTo):
+	database = Database()
+	pairIds = database.GetPairIds(pairs)
 	pair = pair.replace('.', '/')
 	if pair not in pairIds:
 		abort(404)
@@ -27,6 +29,8 @@ def GetTradeCount(pair, timestampStart, timestampUpTo):
 
 @app.route('/spreads/<int:runId>&<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
 def GetSpreads(runId, pair, timestampStart, timestampUpTo):
+	database = Database()
+	pairIds = database.GetPairIds(pairs)
 	pair = pair.replace('.', '/')
 	if pair not in pairIds:
 		abort(404)
@@ -36,6 +40,8 @@ def GetSpreads(runId, pair, timestampStart, timestampUpTo):
 
 @app.route('/trades/<int:runId>&<string:pair>&<int:timestampStart>&<int:timestampUpTo>', methods=['GET'])
 def GetTrades(runId, pair, timestampStart, timestampUpTo):
+	database = Database()
+	pairIds = database.GetPairIds(pairs)
 	pair = pair.replace('.', '/')
 	if pair not in pairIds:
 		abort(404)
@@ -45,6 +51,8 @@ def GetTrades(runId, pair, timestampStart, timestampUpTo):
 
 @app.route('/runs/<int:interruptionStart>&<int:interruptionEnd>', methods=['GET'])
 def GetLocalOverlappingRun(interruptionStart, interruptionEnd):
+	database = Database()
+	pairIds = database.GetPairIds(pairs)
 	if interruptionStart >= interruptionEnd:
 		abort(404)
 	return jsonify(database.GetLocalOverlappingRun(interruptionStart, interruptionEnd))
