@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, abort
 from Database import Database
 
-pairs = ["XBT/EUR", "ETH/EUR"]
+pairs = ["GNO/USD", "EOS/EUR", "XRP/USD", "QTUM/EUR", "MLN/ETH", "ETH/JPY", "XBT/JPY", "ETH/GBP", "MLN/XBT", "XLM/XBT", "ADA/USD", "XRP/CAD", "LTC/USD", "XBT/CAD", "ZEC/XBT", "USDT/USD", "DASH/XBT", "XRP/XBT", "EOS/XBT", "REP/ETH", "XRP/EUR", "XLM/EUR", "XMR/XBT", "ADA/ETH", "GNO/XBT", "GNO/EUR", "BSV/XBT", "XTZ/XBT", "QTUM/USD", "ETH/CAD", "ZEC/USD", "BCH/EUR", "XBT/GBP", "ETC/ETH", "ADA/CAD", "QTUM/ETH", "XDG/XBT", "XTZ/USD", "REP/USD", "XBT/USD", "QTUM/CAD", "XLM/USD", "ZEC/JPY", "DASH/USD", "BCH/USD", "XTZ/CAD", "XRP/JPY", "ADA/XBT", "EOS/ETH", "BSV/USD", "ETH/EUR", "REP/EUR", "LTC/XBT", "XBT/EUR", "XMR/EUR", "ETC/EUR", "ADA/EUR", "QTUM/XBT", "ETH/XBT", "EOS/USD", "ETH/USD", "XTZ/ETH", "ETC/USD", "ZEC/EUR", "REP/XBT", "XMR/USD", "DASH/EUR", "XTZ/EUR", "BCH/XBT", "GNO/ETH", "ETC/XBT", "BSV/EUR", "LTC/EUR"]
 
 app = Flask(__name__)
 

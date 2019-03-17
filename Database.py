@@ -176,13 +176,13 @@ class Database:
 	def GetNonEmptyLocalRuns(self):
 		self.cnx.commit()
 		cursor = self.cnx.cursor(buffered=True)
-		cursor.execute('SELECT `id` FROM `runs` WHERE `node` = "localhost";')
+		cursor.execute('SELECT `id`, `pairs` FROM `runs` WHERE `node` = "localhost";')
 		result = []
 		for row in cursor:
 			runId = row[0]
 			runStart, runEnd = self.GetRunRange(runId)
-			if runStart != None and runEnd != None:
-				result.append({"id":runId, "start":str(runStart), "end":str(runEnd)})
+			if runStart != None and runEnd != None and row[1] != "[]":
+				result.append({"id":runId, "start":str(runStart), "end":str(runEnd), "pairs": json.loads(row[1])})
 			print(runId)
 			sys.stdout.flush()
 		return result
