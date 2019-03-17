@@ -38,6 +38,28 @@ class Database:
 				self.cnx.commit()
 				pairIds[pair] = cursor.lastrowid
 		return pairIds
+
+	def GetPairsForRun(self, runId):
+		cursor = self.cnx.cursor()
+		cursor.execute("SELECT `pairs` FROM `runs` WHERE `id` = %s;", (runId,))
+		for row in cursor:
+			return json.loads(row[0])
+		return None
+
+	def CalculatePairsForRun(self, runId):
+		cursor = self.cnx.cursor()
+		pairIds = set()
+		cursor.execute("SELECT `pair_id` FROM `spreads` WHERE `run_id` = %s;", (runId,))
+		for row in cursor:
+			pairIds.add(row[0])
+		cursor.execute("SELECT `pair_id` FROM `trades` WHERE `run_id` = %s;", (runId,))
+		for row in cursor:
+			pairIds.add(row[0])
+		result = set()
+		for pairId in pairIds:
+			cursor.execute("SELECT `pair` FROM `pairs` WHERE `id` = %s;", (pairId,))
+			result.add(cursor.fetchone()[0])
+		return result
 		
 	def StartRun(self, pairs):
 		cursor = self.cnx.cursor()
@@ -113,6 +135,18 @@ class Database:
 				updateCursor = self.cnx.cursor()
 				updateCursor.execute("UPDATE `runs` SET `first_timestamp` = {}, `last_timestamp` = {} WHERE `id` = {}"
 						     .format(start, end, row[0]))
+		self.cnx.commit()
+
+	def SyncRunPairs(self):
+		self.cnx.commit()
+		cursor = self.cnx.cursor(buffered=True)
+		cursor.execute("SELECT `id` FROM `runs` WHERE `pairs` = \"\";")
+		for row in cursor:
+			runId = row[0]
+			print(runId)
+			updateCursor = self.cnx.cursor()
+			updateCursor.execute("UPDATE `runs` SET `pairs` = %s WHERE `id` = %s",
+					     (json.dumps(list(self.CalculatePairsForRun(runId))), runId))
 		self.cnx.commit()
 
 	def UpdateRunStats(self, runId, activityTimestamp):
