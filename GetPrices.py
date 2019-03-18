@@ -1,6 +1,7 @@
 from decimal import Decimal
 import numpy as np
 from Database import Database
+from Kraken import RESTInterface
 
 def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 	pairIds = database.GetPairIds([pair])
@@ -45,7 +46,10 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 
 if __name__ == "__main__":
 	database = Database()
-	timeSteps = 60*60*24*1
-	asks, bids = GetPrices(database, "XBT/EUR", 1552694400, 1, timeSteps)
-	for i in range(timeSteps):
-		print("{} {} {}".format(i, asks[i], bids[i]))
+	timeSteps = 60*60*24*2
+	pairs = RESTInterface.GetPairs()
+	for pair in pairs:
+		asks, bids = GetPrices(database, pair, 1552694400, 1, timeSteps)
+		np.save("Data/{}_asks.npy".format(pair.replace('/', '.')), asks)
+		np.save("Data/{}_bids.npy".format(pair.replace('/', '.')), bids)
+		print(pair)
