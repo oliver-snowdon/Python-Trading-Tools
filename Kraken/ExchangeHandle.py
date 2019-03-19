@@ -18,6 +18,7 @@ class ExchangeHandle:
 		self.k.load_key(keyPath)
 		self.SyncOpenPositions()
 		self.SyncBalances()
+		self.InitPairs()
 
 	def SyncBalances(self):
 		self.balances = self.TryQueryPrivateUntilSuccess('Balance')
@@ -94,6 +95,20 @@ class ExchangeHandle:
 				print("Caught error: {}".format(repr(error)))
 				sys.stdout.flush()
 				time.sleep(1)
+
+	def InitPairs(self):
+		self.pairWsNameToBaseQuoteLookup = dict()
+		self.baseQuoteToWsnameLookup = dict()
+		data = self.k.query_public('AssetPairs')
+		for key, pair in data['result'].items():
+			if 'wsname' in pair:
+				baseQuote = '{}{}'.format(pair['base'], pair['quote'])
+				wsname = pair['wsname']
+				self.pairWsNameToBaseQuoteLookup[wsname] = baseQuote
+				self.baseQuoteToWsnameLookup[baseQuote] = wsname
+
+		print(self.pairWsNameToBaseQuoteLookup)
+		print(self.baseQuoteToWsnameLookup)
 
 if __name__ == "__main__":
 	exchangeHandle = ExchangeHandle('kraken.key')
