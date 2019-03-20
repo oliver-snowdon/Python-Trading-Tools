@@ -25,7 +25,7 @@ class ExchangeHandle:
 		print(self.balances)
 
 	def SyncOpenPositions(self):
-		result = self.TryQueryPrivateUntilSuccess('OpenPositions')
+		result = self.TryQueryPrivateUntilSuccess('OpenPositions', data={'docalcs': 'true'})
 
 		self.openPositions = []
 		for txid in result:
@@ -33,11 +33,34 @@ class ExchangeHandle:
 						   'type': result[txid]['type'],
 						   'pair': result[txid]['pair'],
 						   'openVolume': Decimal(result[txid]['vol'])
-								-Decimal(result[txid]['vol_closed'])})
+								-Decimal(result[txid]['vol_closed']),
+						   'net': Decimal(result[txid]['net'])})
 
 		print(self.openPositions)
 
-	def PlaceMarketOrder(volume, pair, buyOrSell, leverage = 'none'):
+	def GetBalance(self, asset):
+		return Decimal(self.balances[asset]) if asset in self.balances else 0
+
+	def GetEquity(self, quote):
+		equity = self.GetBalance(quote)
+		for position in self.openPositions:
+			if self.baseQuoteBreakdownLookup[position['pair']]['quote'] == quote:
+				equity = equity + position['net']
+		return equity
+
+	def GetOpenPositionBalance(self, base):
+		balance = 0
+		for position in self.openPositions:
+			if self.baseQuoteBreakdownLookup[position['pair']]['base'] == base:
+				if position['type'] == 'buy':
+					balance = balance + position['openVolume']
+				elif position['type'] == 'sell':
+					balance = balance - position['openVolume']
+		return balance
+
+	def PlaceMarketOrder(self, volume, pair, buyOrSell, leverage = 'none'):
+		print("PlaceMarketOrder({}, {}, {}, {})".format(volume, pair, buyOrSell, leverage))
+		return
 		data = self.k.query_private('AddOrder', data = {'pair': pair,
 								'type': buyOrSell,
 								'ordertype': 'market',
@@ -45,6 +68,7 @@ class ExchangeHandle:
 								'leverage': leverage})
 		txids =  data['result']['txid']
 		self.WaitUntilNoOpenOrders()
+		self.SyncOpenPositions()
 		return txids
 
 	def CloseAllOpenPositionsAtMarketPrice(self):
@@ -99,6 +123,7 @@ class ExchangeHandle:
 	def InitPairs(self):
 		self.pairWsNameToBaseQuoteLookup = dict()
 		self.baseQuoteToWsnameLookup = dict()
+		self.baseQuoteBreakdownLookup = dict()
 		data = self.k.query_public('AssetPairs')
 		for key, pair in data['result'].items():
 			if 'wsname' in pair:
@@ -106,9 +131,11 @@ class ExchangeHandle:
 				wsname = pair['wsname']
 				self.pairWsNameToBaseQuoteLookup[wsname] = baseQuote
 				self.baseQuoteToWsnameLookup[baseQuote] = wsname
+				self.baseQuoteBreakdownLookup[baseQuote] = {'base':pair['base'], 'quote':pair['quote']}
 
 		print(self.pairWsNameToBaseQuoteLookup)
 		print(self.baseQuoteToWsnameLookup)
+		print(self.baseQuoteBreakdownLookup)
 
 if __name__ == "__main__":
 	exchangeHandle = ExchangeHandle('kraken.key')

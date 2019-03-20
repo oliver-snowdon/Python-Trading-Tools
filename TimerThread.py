@@ -12,7 +12,9 @@ class TimerThread:
 		while self.keepRunning:
 			nextCall = nextCall + self.nSecondsBetweenCall
 			self.Target()
-			time.sleep(nextCall - time.time())
+			wait = nextCall - time.time()
+			if wait > 0:
+				time.sleep(wait)
 
 	def Target(self):
 		print (datetime.datetime.now())

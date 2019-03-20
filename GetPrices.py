@@ -7,6 +7,7 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 	pairIds = database.GetPairIds([pair])
 	pairId = pairIds[pair]
 
+	database.cnx.commit()
 	preQueryCursor = database.cnx.cursor()
 	preQueryCursor.execute('SELECT MIN(first_timestamp) FROM `runs` WHERE `pairs` LIKE "%{}%"'.format(pair))
 	minTimestampInDatabase = preQueryCursor.fetchone()[0]
@@ -46,7 +47,7 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 
 if __name__ == "__main__":
 	database = Database()
-	timeSteps = 60*60*24*2
+	timeSteps = 60*60*24*3
 	pairs = RESTInterface.GetPairs()
 	for pair in pairs:
 		asks, bids = GetPrices(database, pair, 1552694400, 1, timeSteps)
