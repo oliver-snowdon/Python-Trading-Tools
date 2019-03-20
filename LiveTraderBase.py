@@ -3,10 +3,11 @@ from TimerThread import TimerThread
 from Database import Database
 from Kraken.ExchangeHandle import ExchangeHandle
 import time
+from TradeSimulator import TradeSimulator
 
 class LiveTraderBase(TimerThread):
 
-	def __init__(self, pairWsname, baseName, quoteName):
+	def __init__(self, pairWsname, baseName, quoteName, simulation=True):
 		super(LiveTraderBase, self).__init__(1)
 		self.pairWsname = pairWsname
 		self.baseName = baseName
@@ -17,6 +18,10 @@ class LiveTraderBase(TimerThread):
 		self.secondsUntilSync = self.syncPeriod
 		self.exchangeHandle = ExchangeHandle('Kraken/kraken.key')
 		self.minimumOrder = 0.02
+		self.simulation=simulation
+		if simulation:
+			self.simulator = TradeSimulator(float(self.exchangeHandle.GetBalance(baseName)),
+							float(self.exchangeHandle.GetBalance(quoteName)))
 
 	def Target(self):
 		super(LiveTraderBase, self).Target()
@@ -24,7 +29,6 @@ class LiveTraderBase(TimerThread):
 		if self.secondsUntilSync <= 0:
 			self.exchangeHandle.SyncBalances()
 			self.exchangeHandle.SyncOpenPositions()
-			print("Equity is {}".format(self.exchangeHandle.GetEquity()))
 			self.secondsUntilSync = self.syncPeriod
 		self.secondsUntilNextTradeDecision = self.secondsUntilNextTradeDecision - 1
 		if self.secondsUntilNextTradeDecision <= 0:
@@ -43,31 +47,58 @@ class LiveTraderBase(TimerThread):
 			if targetAmount != self.GetBaseBalance():
 				difference = targetAmount - self.GetBaseBalance()
 				pair = '{}{}'.format(self.baseName, self.quoteName)
-				if difference > 0:
-					self.exchangeHandle.PlaceMarketOrder(difference, pair, 'buy', leverage='5:1')
-				elif difference < 0:
-					self.exchangeHandle.PlaceMarketOrder(difference, pair, 'sell', leverage='5:1')
+				if difference > self.minimumOrder:
+					self.PlaceMarketOrder(abs(difference), 'buy', asks[-1], bids[-1])
+				elif difference < -self.minimumOrder:
+					self.PlaceMarketOrder(abs(difference), 'sell', asks[-1], bids[-1])
 				else:
 					print("Difference between target amount and base balance less than minimum order")
 
+				print("Base balance = {}".format(self.GetBaseBalance()))
+				print("Quote balance = {}".format(self.GetQuoteBalance()))
+
+	def PlaceMarketOrder(self, volume, buyOrSell, ask, bid):
+		if self.simulation:
+			if buyOrSell == 'buy':
+				self.simulator.Buy(volume, ask, 0.0026)
+			elif buyOrSell == 'sell':
+				self.simulator.Sell(volume, bid, 0.0026)
+		else:
+			if buyOrSell == 'buy':
+				self.exchangeHandle.PlaceMarketOrder(difference, pair, 'buy', leverage='5:1')
+			elif buyOrSell == 'sell':
+				self.exchangeHandle.PlaceMarketOrder(difference, pair, 'sell', leverage='5:1')
+
 	def GetBaseBalance(self):
-		return self.exchangeHandle.GetBalance(self.baseName) + self.exchangeHandle.GetOpenPositionBalance(self.baseName)
+		if self.simulation:
+			result =  self.simulator.GetBaseBalance()
+		else:
+			result = self.exchangeHandle.GetBalance(self.baseName)\
+			       + self.exchangeHandle.GetOpenPositionBalance(self.baseName)
+		return result
 
 	def GetQuoteBalance(self):
-		return self.exchangeHandle.GetBalance(self.quoteName)
+		if self.simulation:
+			result = self.simulator.GetQuoteBalance()
+		else:
+			result = self.exchangeHandle.GetBalance(self.quoteName)
+		return result
 
-	def GetEquity(self):
-		return self.exchangeHandle.GetEquity(self.quoteName)
+	def GetEquity(self, bid):
+		if self.simulation:
+			return self.simulator.GetQuoteBalance()\
+			     + self.simulator.GetBaseBalance() * bid
+		else:
+			return self.exchangeHandle.GetEquity(self.quoteName)
 
 	def SecondsLookbackRequiredForNextDecision(self):
 		return 60*10*24
 
 	def MakeTradeDecision(self, asks, bids):
-		return 10, 0
+		return 10, 0.5
 
 if __name__ == '__main__':
 	trader = LiveTraderBase('ETH/EUR', 'XETH', 'ZEUR')
 	print(trader.GetBaseBalance())
 	print(trader.GetQuoteBalance())
-	print(trader.GetEquity())
 	trader.Start()
