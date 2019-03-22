@@ -4,6 +4,7 @@ from Database import Database
 from Kraken.ExchangeHandle import ExchangeHandle
 import time
 from TradeSimulator import TradeSimulator
+from GapFiller import FillGap, DownloadRuns
 
 class LiveTraderBase(TimerThread):
 
@@ -20,8 +21,7 @@ class LiveTraderBase(TimerThread):
 		self.minimumOrder = 0.02
 		self.simulation=simulation
 		if simulation:
-			self.simulator = TradeSimulator(float(self.exchangeHandle.GetBalance(baseName)),
-							float(self.exchangeHandle.GetBalance(quoteName)))
+			self.simulator = TradeSimulator('SimulatorBalances.json')
 
 	def Target(self):
 		super(LiveTraderBase, self).Target()
@@ -34,6 +34,8 @@ class LiveTraderBase(TimerThread):
 		if self.secondsUntilNextTradeDecision <= 0:
 			lookback = self.SecondsLookbackRequiredForNextDecision()
 			dataStartTimestamp = int(time.time()) - lookback
+			remoteRuns = DownloadRuns(self.pairWsname)
+			FillGap(self.database, self.pairWsname, dataStartTimestamp, dataStartTimestamp+lookback, remoteRuns)
 			print("dataStartTimestamp: {}".format(dataStartTimestamp))
 			print("lookback: {}".format(lookback))
 			while True:
