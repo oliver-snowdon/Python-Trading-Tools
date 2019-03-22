@@ -18,6 +18,7 @@ def FindCoveringRunInclusive(runs, pair, firstEvent, lastEvent):
 	return None
 
 def FillGap(database, pair, start, end, remoteRuns):
+	database.cnx.commit()
 	cursor = database.cnx.cursor()
 	cursor.execute("SELECT `id`, `first_timestamp`, `last_timestamp`, `pairs` FROM `runs`")
 	eventTimestamps = set()
