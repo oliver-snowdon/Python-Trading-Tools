@@ -17,16 +17,17 @@ class LiveTraderBase(TimerThread):
 		self.secondsUntilNextTradeDecision = 0
 		self.syncPeriod = 60
 		self.secondsUntilSync = self.syncPeriod
-		self.exchangeHandle = ExchangeHandle('Kraken/kraken.key')
 		self.minimumOrder = 0.02
 		self.simulation=simulation
 		if simulation:
 			self.simulator = TradeSimulator('SimulatorBalances.json')
+		else:
+			self.exchangeHandle = ExchangeHandle('Kraken/kraken.key')
 
 	def Target(self):
 		super(LiveTraderBase, self).Target()
 		self.secondsUntilSync = self.secondsUntilSync - 1
-		if self.secondsUntilSync <= 0:
+		if self.secondsUntilSync <= 0 and not self.simulation:
 			self.exchangeHandle.SyncBalances()
 			self.exchangeHandle.SyncOpenPositions()
 			self.secondsUntilSync = self.syncPeriod
