@@ -97,7 +97,8 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 				cursor.execute("INSERT INTO `trades` (`run_id`, `pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], trade["price"], trade["amount"], trade["timestamp"], trade["buy_or_sell"], trade["market_or_limit"], trade["misc"]))
 			database.cnx.commit()
 
-pairs = RESTInterface.GetPairs()
-for pair in pairs:
-	remoteRuns = DownloadRuns(pair)
-	FillGap(Database(), pair, 0, 1000000000000000, remoteRuns)
+if __name__ == "__main__":
+	pairs = RESTInterface.GetPairs()
+	for pair in pairs:
+		remoteRuns = DownloadRuns(pair)
+		FillGap(Database(), pair, 0, 1000000000000000, remoteRuns)
