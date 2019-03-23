@@ -1,0 +1,10 @@
+Install MySQL and setup a user/database pair for the trader. To do this, run the following in mySQL client:
+	CREATE USER 'trader'@'localhost' IDENTIFIED BY 'password';
+	CREATE DATABASE trader;
+	GRANT ALL PRIVILEGES ON trader.* TO 'trader'@'localhost';
+	FLUSH PRIVILEGES;
+conda install -c anaconda mysql-connector-python
+conda install requests
+conda install -c conda-forge websockets
+cp Config.sample.py Config.py
+edit Config.py to contain correct details
