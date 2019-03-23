@@ -5,6 +5,7 @@ from Kraken.ExchangeHandle import ExchangeHandle
 import time
 from TradeSimulator import TradeSimulator
 from GapFiller import FillGap, DownloadRuns
+import sys
 
 class LiveTraderBase(TimerThread):
 
@@ -59,6 +60,7 @@ class LiveTraderBase(TimerThread):
 
 				print("Base balance = {}".format(self.GetBaseBalance()))
 				print("Quote balance = {}".format(self.GetQuoteBalance()))
+		sys.stdout.flush()
 
 	def PlaceMarketOrder(self, volume, buyOrSell, ask, bid):
 		if self.simulation:
