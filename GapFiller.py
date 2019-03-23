@@ -40,13 +40,25 @@ def FillGap(database, pair, start, end, remoteRuns):
 	for i in range(len(sortedEventTimestamps)-1):
 		coveringRun = FindCoveringRunInclusive(runs, pair, sortedEventTimestamps[i], sortedEventTimestamps[i+1])
 		if coveringRun == None:
-			remoteCoveringRun = FindCoveringRun(remoteRuns, pair, sortedEventTimestamps[i], sortedEventTimestamps[i+1])
-
-			print(remoteCoveringRun)
+			remoteEventTimestamps = set()
+			remoteEventTimestamps.add(sortedEventTimestamps[i])
+			remoteEventTimestamps.add(sortedEventTimestamps[i+1])
+			for run in remoteRuns:
+				if run['firstTimestamp'] > sortedEventTimestamps[i] and run['firstTimestamp'] < sortedEventTimestamps[i+1]:
+					remoteEventTimestamps.add(run['firstTimestamp'])
+				if run['lastTimestamp'] > sortedEventTimestamps[i] and run['lastTimestamp'] < sortedEventTimestamps[i+1]:
+					remoteEventTimestamps.add(run['lastTimestamp'])
+			sortedRemoteEventTimestamps = sorted(remoteEventTimestamps)
+			
+			for j in range(len(sortedRemoteEventTimestamps)-1):
 				
-			if remoteCoveringRun != None:
-				AddRemoteRun(remoteCoveringRun["node"], remoteCoveringRun["remoteRunId"],
-					     sortedEventTimestamps[i]-1, sortedEventTimestamps[i+1]+1, pair, database)
+				remoteCoveringRun = FindCoveringRun(remoteRuns, pair, sortedRemoteEventTimestamps[j], sortedRemoteEventTimestamps[j+1])
+
+				print(remoteCoveringRun)
+					
+				if remoteCoveringRun != None:
+					AddRemoteRun(remoteCoveringRun["node"], remoteCoveringRun["remoteRunId"],
+						     sortedRemoteEventTimestamps[j]-1, sortedRemoteEventTimestamps[j+1]+1, pair, database)
 				
 		else:
 			print(coveringRun)
@@ -80,14 +92,14 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 			if r.status_code != 200:
 				raise Exception("Could not download {}".format(url))
 			spreads = json.loads(r.text)
-			print(spreads)
+			#print(spreads)
 			url = 'http://{}/trades/{}&{}&{}&{}'.format(node, remoteRunId, pair.replace('/', '.'), firstTimestampToDownload, lastTimestampToDownload)
 			print(url)
 			r = requests.get(url)
 			if r.status_code != 200:
 				raise Exception("Could not download {}".format(url))
 			trades = json.loads(r.text)
-			print(trades)
+			#print(trades)
 			cursor = database.cnx.cursor()
 			cursor.execute("INSERT INTO `runs` (`node`, `remote_run_id`, `pairs`, `first_timestamp`, `last_timestamp`, `error`) VALUES (%s, %s, %s, %s, %s, %s);", (node, remoteRunId, json.dumps([pair]), firstTimestampToDownload, lastTimestampToDownload, ""))
 			database.cnx.commit()
