@@ -18,6 +18,7 @@ def FindCoveringRunInclusive(runs, pair, firstEvent, lastEvent):
 	return None
 
 def FillGap(database, pair, start, end, remoteRuns):
+	print("start = {}, end = {}".format(start, end))
 	database.cnx.commit()
 	cursor = database.cnx.cursor()
 	cursor.execute("SELECT `id`, `first_timestamp`, `last_timestamp`, `pairs` FROM `runs`")
@@ -30,14 +31,17 @@ def FillGap(database, pair, start, end, remoteRuns):
 			firstTimestamp = Decimal(row[1])
 			lastTimestamp = Decimal(row[2])
 			assert(firstTimestamp<=lastTimestamp)
-			if firstTimestamp > start:
+			if firstTimestamp > start and firstTimestamp < end:
 				eventTimestamps.add(firstTimestamp)
-			if lastTimestamp < end:
+			if lastTimestamp < end and lastTimestamp > start:
 				eventTimestamps.add(lastTimestamp)
 			runs.append({"id":row[0], "firstTimestamp":firstTimestamp, "lastTimestamp":lastTimestamp,
 				     "pairs":json.loads(row[3])})
 	sortedEventTimestamps = sorted(eventTimestamps)
+	print(sortedEventTimestamps)
 	for i in range(len(sortedEventTimestamps)-1):
+		assert(sortedEventTimestamps[i] >= start and sortedEventTimestamps[i] <= end)
+		assert(sortedEventTimestamps[i+1] >= start and sortedEventTimestamps[i+1] <= end)
 		coveringRun = FindCoveringRunInclusive(runs, pair, sortedEventTimestamps[i], sortedEventTimestamps[i+1])
 		if coveringRun == None:
 			remoteEventTimestamps = set()
@@ -51,6 +55,9 @@ def FillGap(database, pair, start, end, remoteRuns):
 			sortedRemoteEventTimestamps = sorted(remoteEventTimestamps)
 			
 			for j in range(len(sortedRemoteEventTimestamps)-1):
+				print("sortedRemoteEventTimestamps")
+				print(sortedRemoteEventTimestamps[j])
+				print(sortedRemoteEventTimestamps[j+1])
 				
 				remoteCoveringRun = FindCoveringRun(remoteRuns, pair, sortedRemoteEventTimestamps[j], sortedRemoteEventTimestamps[j+1])
 

@@ -6,6 +6,7 @@ import time
 from TradeSimulator import TradeSimulator
 from GapFiller import FillGap, DownloadRuns
 import sys
+from decimal import Decimal
 
 class LiveTraderBase(TimerThread):
 
@@ -37,7 +38,7 @@ class LiveTraderBase(TimerThread):
 			lookback = self.SecondsLookbackRequiredForNextDecision()
 			dataStartTimestamp = int(time.time()) - lookback
 			remoteRuns = DownloadRuns(self.pairWsname)
-			FillGap(self.database, self.pairWsname, dataStartTimestamp, dataStartTimestamp+lookback, remoteRuns)
+			FillGap(self.database, self.pairWsname, Decimal(dataStartTimestamp), Decimal(dataStartTimestamp+lookback), remoteRuns)
 			print("dataStartTimestamp: {}".format(dataStartTimestamp))
 			print("lookback: {}".format(lookback))
 			while True:
