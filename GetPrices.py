@@ -47,7 +47,7 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 
 if __name__ == "__main__":
 	database = Database()
-	timeSteps = 60*60*24*7
+	timeSteps = 60*60*24*8
 	pairs = RESTInterface.GetPairs()
 	for pair in pairs:
 		asks, bids = GetPrices(database, pair, 1552694400, 1, timeSteps)
