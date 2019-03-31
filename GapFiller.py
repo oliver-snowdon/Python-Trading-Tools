@@ -30,13 +30,13 @@ def FillGap(database, pair, start, end, remoteRuns):
 		if pair in json.loads(row[3]):
 			firstTimestamp = Decimal(row[1])
 			lastTimestamp = Decimal(row[2])
-			assert(firstTimestamp<=lastTimestamp)
-			if firstTimestamp > start and firstTimestamp < end:
-				eventTimestamps.add(firstTimestamp)
-			if lastTimestamp < end and lastTimestamp > start:
-				eventTimestamps.add(lastTimestamp)
-			runs.append({"id":row[0], "firstTimestamp":firstTimestamp, "lastTimestamp":lastTimestamp,
-				     "pairs":json.loads(row[3])})
+			if firstTimestamp<=lastTimestamp:
+				if firstTimestamp > start and firstTimestamp < end:
+					eventTimestamps.add(firstTimestamp)
+				if lastTimestamp < end and lastTimestamp > start:
+					eventTimestamps.add(lastTimestamp)
+				runs.append({"id":row[0], "firstTimestamp":firstTimestamp, "lastTimestamp":lastTimestamp,
+					     "pairs":json.loads(row[3])})
 	sortedEventTimestamps = sorted(eventTimestamps)
 	print(sortedEventTimestamps)
 	for i in range(len(sortedEventTimestamps)-1):
@@ -63,7 +63,7 @@ def FillGap(database, pair, start, end, remoteRuns):
 
 				print(remoteCoveringRun)
 					
-				if remoteCoveringRun != None:
+				if remoteCoveringRun != None and remoteCoveringRun['lastTimestamp']:
 					AddRemoteRun(remoteCoveringRun["node"], remoteCoveringRun["remoteRunId"],
 						     sortedRemoteEventTimestamps[j]-1, sortedRemoteEventTimestamps[j+1]+1, pair, database)
 				
@@ -83,6 +83,7 @@ def DownloadRuns(pair):
 	return result
 
 def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database):
+	assert(startTimestamp < endTimestamp)
 	pairIds = database.GetPairIds([pair])
 	url = 'http://{}/runs'.format(node)
 	r = requests.get(url)
@@ -91,8 +92,12 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 	data = json.loads(r.text)
 	for run in data:
 		if remoteRunId == run["id"]:
+			assert(Decimal(run["start"]) < Decimal(run["end"]))
 			firstTimestampToDownload = int(max(Decimal(run["start"]), startTimestamp))
 			lastTimestampToDownload = int(min(Decimal(run["end"]), endTimestamp))
+			if firstTimestampToDownload == lastTimestampToDownload:
+				continue
+			assert(firstTimestampToDownload < lastTimestampToDownload)
 			url = 'http://{}/spreads/{}&{}&{}&{}'.format(node, remoteRunId, pair.replace('/', '.'), firstTimestampToDownload, lastTimestampToDownload)
 			print(url)
 			r = requests.get(url)

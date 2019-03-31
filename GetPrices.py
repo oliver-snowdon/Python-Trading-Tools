@@ -2,8 +2,9 @@ from decimal import Decimal
 import numpy as np
 from Database import Database
 from Kraken import RESTInterface
+import time
 
-def GetPrices(database, pair, startTimestamp, interval, timeSteps):
+def GetPrices(database, pair, startTimestamp, interval, timeSteps, verbose=False):
 	pairIds = database.GetPairIds([pair])
 	pairId = pairIds[pair]
 
@@ -22,7 +23,7 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 	asks = np.zeros(timeSteps)
 	bids = np.zeros(timeSteps)
 
-	cursor = database.cnx.cursor(buffered=True)
+	cursor = database.cnx.cursor()
 	cursor.execute('SELECT `ask`, `bid`, `timestamp` FROM `spreads` WHERE `pair_id` = %s AND `timestamp` >= %s AND `timestamp` <= %s ORDER BY `timestamp` ASC;',
 		       (pairId, startTimestamp, startTimestamp + interval*(timeSteps-1)))
 	i = 0
@@ -35,6 +36,8 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 		while True:
 			if timestamp > startTimestamp + interval*i:
 				i = i+1
+				if verbose:
+					print("{} of {}.".format(i, timeSteps))
 				asks[i] = ask
 				bids[i] = bid
 			else:
@@ -47,10 +50,12 @@ def GetPrices(database, pair, startTimestamp, interval, timeSteps):
 
 if __name__ == "__main__":
 	database = Database()
-	timeSteps = 60*60*24*8
-	pairs = RESTInterface.GetPairs()
+	timeSteps = 60*60*24*15
+	start = 1552694400
+	#pairs = RESTInterface.GetPairs()
+	pairs = ["ETH/EUR"]
 	for pair in pairs:
-		asks, bids = GetPrices(database, pair, 1552694400, 1, timeSteps)
+		asks, bids = GetPrices(database, pair, start, 1, timeSteps, verbose=True)
 		np.save("Data/{}_asks.npy".format(pair.replace('/', '.')), asks)
 		np.save("Data/{}_bids.npy".format(pair.replace('/', '.')), bids)
 		print(pair)
