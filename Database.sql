@@ -2,10 +2,10 @@
 -- version 4.6.6deb5
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Mar 13, 2019 at 08:16 PM
+-- Host: localhost:3306
+-- Generation Time: Apr 17, 2019 at 05:18 AM
 -- Server version: 5.7.25-0ubuntu0.18.04.2
--- PHP Version: 7.2.15-0ubuntu0.18.04.1
+-- PHP Version: 7.2.15-0ubuntu0.18.04.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -103,15 +103,23 @@ ALTER TABLE `runs`
 ALTER TABLE `spreads`
   ADD PRIMARY KEY (`id`),
   ADD KEY `run_id` (`run_id`),
-  ADD KEY `timestamp` (`timestamp`);
+  ADD KEY `pair_id` (`pair_id`),
+  ADD KEY `timestamp` (`timestamp`),
+  ADD KEY `run_id_timestamp` (`run_id`,`timestamp`),
+  ADD KEY `pair_id_timestamp` (`pair_id`,`timestamp`),
+  ADD KEY `run_id_pair_id_timestamp` (`run_id`,`pair_id`,`timestamp`);
 
 --
 -- Indexes for table `trades`
 --
 ALTER TABLE `trades`
-  ADD PRIMARY KEY `id` (`id`),
+  ADD PRIMARY KEY (`id`),
   ADD KEY `run_id` (`run_id`),
-  ADD KEY `timestamp` (`timestamp`);
+  ADD KEY `pair_id` (`pair_id`),
+  ADD KEY `timestamp` (`timestamp`),
+  ADD KEY `run_id_timestamp` (`run_id`,`timestamp`),
+  ADD KEY `pair_id_timestamp` (`pair_id`,`timestamp`),
+  ADD KEY `run_id_pair_id_timestamp` (`run_id`,`pair_id`,`timestamp`);
 
 --
 -- AUTO_INCREMENT for dumped tables
