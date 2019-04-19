@@ -173,10 +173,10 @@ class Database:
 				result = runId
 		return result
 
-	def GetNonEmptyLocalRuns(self):
+	def GetNonEmptyRuns(self):
 		self.cnx.commit()
 		cursor = self.cnx.cursor(buffered=True)
-		cursor.execute('SELECT `id`, `pairs` FROM `runs` WHERE `node` = "localhost";')
+		cursor.execute('SELECT `id`, `pairs` FROM `runs`;')
 		result = []
 		for row in cursor:
 			runId = row[0]

@@ -57,9 +57,9 @@ def GetLocalOverlappingRun(interruptionStart, interruptionEnd):
 	return jsonify(database.GetLocalOverlappingRun(interruptionStart, interruptionEnd))
 
 @app.route('/runs', methods=['GET'])
-def GetNonEmptyLocalRuns():
+def GetNonEmptyRuns():
 	database = Database()
-	result = database.GetNonEmptyLocalRuns()
+	result = database.GetNonEmptyRuns()
 	print(result)
 	return jsonify(result)
 

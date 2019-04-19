@@ -4,12 +4,25 @@ from decimal import Decimal
 from Database import Database
 from Kraken import RESTInterface
 import Config
+import numpy as np
 
 def FindCoveringRun(runs, pair, firstEvent, lastEvent):
 	for run in runs:
 		if pair in run["pairs"] and run["firstTimestamp"] < firstEvent and run["lastTimestamp"] > lastEvent:
 			return run
 	return None
+
+def FindBestCoveringRun(runs, pair, firstEvent, lastEvent):
+	coveringRuns = []
+	runLengths = []
+	for run in runs:
+		if pair in run["pairs"] and run["firstTimestamp"] <= firstEvent and run["lastTimestamp"] >= lastEvent:
+			coveringRuns.append(run)
+			runLengths.append(run["lastTimestamp"] - run["firstTimestamp"])
+	if len(coveringRuns) == 0:
+		return None
+	else:
+		return coveringRuns[np.argsort(runLengths)[-1]]
 
 def FindCoveringRunInclusive(runs, pair, firstEvent, lastEvent):
 	for run in runs:
@@ -53,19 +66,22 @@ def FillGap(database, pair, start, end, remoteRuns):
 				if run['lastTimestamp'] > sortedEventTimestamps[i] and run['lastTimestamp'] < sortedEventTimestamps[i+1]:
 					remoteEventTimestamps.add(run['lastTimestamp'])
 			sortedRemoteEventTimestamps = sorted(remoteEventTimestamps)
+
+			filledUpTo = sortedEventTimestamps[i]
 			
 			for j in range(len(sortedRemoteEventTimestamps)-1):
 				print("sortedRemoteEventTimestamps")
 				print(sortedRemoteEventTimestamps[j])
 				print(sortedRemoteEventTimestamps[j+1])
 				
-				remoteCoveringRun = FindCoveringRun(remoteRuns, pair, sortedRemoteEventTimestamps[j], sortedRemoteEventTimestamps[j+1])
+				if sortedRemoteEventTimestamps[j] >= filledUpTo:
+					remoteCoveringRun = FindBestCoveringRun(remoteRuns, pair, sortedRemoteEventTimestamps[j], sortedRemoteEventTimestamps[j+1])
 
-				print(remoteCoveringRun)
-					
-				if remoteCoveringRun != None and remoteCoveringRun['lastTimestamp']:
-					AddRemoteRun(remoteCoveringRun["node"], remoteCoveringRun["remoteRunId"],
-						     sortedRemoteEventTimestamps[j]-1, sortedRemoteEventTimestamps[j+1]+1, pair, database)
+					print(remoteCoveringRun)
+						
+					if remoteCoveringRun != None and remoteCoveringRun['lastTimestamp']:
+						filledUpTo = AddRemoteRun(remoteCoveringRun["node"], remoteCoveringRun["remoteRunId"],
+									  sortedRemoteEventTimestamps[j]-1, sortedEventTimestamps[i+1]+1, pair, database)
 				
 		else:
 			print(coveringRun)
@@ -121,6 +137,7 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 			for trade in trades:
 				cursor.execute("INSERT INTO `trades` (`run_id`, `pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], trade["price"], trade["amount"], trade["timestamp"], trade["buy_or_sell"], trade["market_or_limit"], trade["misc"]))
 			database.cnx.commit()
+			return lastTimestampToDownload
 
 if __name__ == "__main__":
 	pairs = RESTInterface.GetPairs()
