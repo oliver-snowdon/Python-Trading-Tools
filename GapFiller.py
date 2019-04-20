@@ -14,15 +14,15 @@ def FindCoveringRun(runs, pair, firstEvent, lastEvent):
 
 def FindBestCoveringRun(runs, pair, firstEvent, lastEvent):
 	coveringRuns = []
-	runLengths = []
+	usableLengths = []
 	for run in runs:
 		if pair in run["pairs"] and run["firstTimestamp"] <= firstEvent and run["lastTimestamp"] >= lastEvent:
 			coveringRuns.append(run)
-			runLengths.append(run["lastTimestamp"] - run["firstTimestamp"])
+			usableLengths.append(run["lastTimestamp"] - firstEvent)
 	if len(coveringRuns) == 0:
 		return None
 	else:
-		return coveringRuns[np.argsort(runLengths)[-1]]
+		return coveringRuns[np.argsort(usableLengths)[-1]]
 
 def FindCoveringRunInclusive(runs, pair, firstEvent, lastEvent):
 	for run in runs:
