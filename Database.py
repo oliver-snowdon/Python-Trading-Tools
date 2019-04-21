@@ -176,11 +176,12 @@ class Database:
 	def GetNonEmptyRuns(self):
 		self.cnx.commit()
 		cursor = self.cnx.cursor(buffered=True)
-		cursor.execute('SELECT `id`, `pairs` FROM `runs`;')
+		cursor.execute('SELECT `id`, `pairs`, `first_timestamp`, `last_timestamp` FROM `runs`;')
 		result = []
 		for row in cursor:
 			runId = row[0]
-			runStart, runEnd = self.GetRunRange(runId)
+			runStart = row[2]
+			runEnd = row[3]
 			if runStart != None and runEnd != None and row[1] != "[]":
 				result.append({"id":runId, "start":str(runStart), "end":str(runEnd), "pairs": json.loads(row[1])})
 			print(runId)
