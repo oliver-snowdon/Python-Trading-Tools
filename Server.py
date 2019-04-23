@@ -60,7 +60,7 @@ def GetLocalOverlappingRun(interruptionStart, interruptionEnd):
 def GetNonEmptyRuns():
 	database = Database()
 	result = database.GetNonEmptyRuns()
-	print(result)
+#	print(result)
 	return jsonify(result)
 
 # https://stackoverflow.com/questions/34066804/disabling-caching-in-flask

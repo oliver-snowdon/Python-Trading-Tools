@@ -184,8 +184,8 @@ class Database:
 			runEnd = row[3]
 			if runStart != None and runEnd != None and row[1] != "[]":
 				result.append({"id":runId, "start":str(runStart), "end":str(runEnd), "pairs": json.loads(row[1])})
-			print(runId)
-			sys.stdout.flush()
+#			print(runId)
+#			sys.stdout.flush()
 		return result
 
 	def CountSpreads(self, pairId, startTimestamp, timestampUpTo):
