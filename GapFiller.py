@@ -5,6 +5,7 @@ from Database import Database
 from Kraken import RESTInterface
 import Config
 import numpy as np
+import math
 
 def FindCoveringRun(runs, pair, firstEvent, lastEvent):
 	for run in runs:
@@ -114,29 +115,39 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 			if firstTimestampToDownload == lastTimestampToDownload:
 				continue
 			assert(firstTimestampToDownload < lastTimestampToDownload)
-			url = 'http://{}/spreads/{}&{}&{}&{}'.format(node, remoteRunId, pair.replace('/', '.'), firstTimestampToDownload, lastTimestampToDownload)
-			print(url)
-			r = requests.get(url)
-			if r.status_code != 200:
-				raise Exception("Could not download {}".format(url))
-			spreads = json.loads(r.text)
-			#print(spreads)
-			url = 'http://{}/trades/{}&{}&{}&{}'.format(node, remoteRunId, pair.replace('/', '.'), firstTimestampToDownload, lastTimestampToDownload)
-			print(url)
-			r = requests.get(url)
-			if r.status_code != 200:
-				raise Exception("Could not download {}".format(url))
-			trades = json.loads(r.text)
-			#print(trades)
 			cursor = database.cnx.cursor()
-			cursor.execute("INSERT INTO `runs` (`node`, `remote_run_id`, `pairs`, `first_timestamp`, `last_timestamp`, `error`) VALUES (%s, %s, %s, %s, %s, %s);", (node, remoteRunId, json.dumps([pair]), firstTimestampToDownload, lastTimestampToDownload, ""))
-			database.cnx.commit()
-			insertedRunId = cursor.lastrowid
-			for spread in spreads:
-				cursor.execute("INSERT INTO `spreads` (`run_id`, `pair_id`, `ask`, `bid`, `timestamp`) VALUES (%s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], spread["ask"], spread["bid"], spread["timestamp"]))
-			for trade in trades:
-				cursor.execute("INSERT INTO `trades` (`run_id`, `pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], trade["price"], trade["amount"], trade["timestamp"], trade["buy_or_sell"], trade["market_or_limit"], trade["misc"]))
-			database.cnx.commit()
+			maxLengthToDownload = 3600
+			for i in range(int(math.ceil((lastTimestampToDownload-firstTimestampToDownload)/maxLengthToDownload))):
+				firstTimestampInSection = firstTimestampToDownload + i * maxLengthToDownload
+				lastTimestampInSection = firstTimestampToDownload + (i+1) * maxLengthToDownload
+				if lastTimestampInSection > lastTimestampToDownload:
+					lastTimestampInSection = lastTimestampToDownload
+				url = 'http://{}/spreads/{}&{}&{}&{}'.format(node, remoteRunId, pair.replace('/', '.'), firstTimestampInSection, lastTimestampInSection)
+				print(url)
+				r = requests.get(url)
+				if r.status_code != 200:
+					raise Exception("Could not download {}".format(url))
+				spreads = json.loads(r.text)
+				#print(spreads)
+				url = 'http://{}/trades/{}&{}&{}&{}'.format(node, remoteRunId, pair.replace('/', '.'), firstTimestampInSection, lastTimestampInSection)
+				print(url)
+				r = requests.get(url)
+				if r.status_code != 200:
+					raise Exception("Could not download {}".format(url))
+				trades = json.loads(r.text)
+				#print(trades)
+
+				if i == 0:
+					cursor.execute("INSERT INTO `runs` (`node`, `remote_run_id`, `pairs`, `first_timestamp`, `last_timestamp`, `error`) VALUES (%s, %s, %s, %s, %s, %s);", (node, remoteRunId, json.dumps([pair]), firstTimestampToDownload, lastTimestampInSection, ""))
+					insertedRunId = cursor.lastrowid
+				else:
+					cursor.execute("UPDATE `runs` SET `last_timestamp` = %s WHERE `id` = %s", (lastTimestampInSection, insertedRunId))
+
+				for spread in spreads:
+					cursor.execute("INSERT INTO `spreads` (`run_id`, `pair_id`, `ask`, `bid`, `timestamp`) VALUES (%s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], spread["ask"], spread["bid"], spread["timestamp"]))
+				for trade in trades:
+					cursor.execute("INSERT INTO `trades` (`run_id`, `pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], trade["price"], trade["amount"], trade["timestamp"], trade["buy_or_sell"], trade["market_or_limit"], trade["misc"]))
+				database.cnx.commit()
 			return lastTimestampToDownload
 
 if __name__ == "__main__":
