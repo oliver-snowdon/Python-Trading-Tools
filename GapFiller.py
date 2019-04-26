@@ -113,7 +113,7 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 			firstTimestampToDownload = int(max(Decimal(run["start"]), startTimestamp))
 			lastTimestampToDownload = int(min(Decimal(run["end"]), endTimestamp))
 			if firstTimestampToDownload == lastTimestampToDownload:
-				continue
+				return lastTimestampToDownload
 			assert(firstTimestampToDownload < lastTimestampToDownload)
 			cursor = database.cnx.cursor()
 			maxLengthToDownload = 3600
@@ -149,6 +149,7 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 					cursor.execute("INSERT INTO `trades` (`run_id`, `pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], trade["price"], trade["amount"], trade["timestamp"], trade["buy_or_sell"], trade["market_or_limit"], trade["misc"]))
 				database.cnx.commit()
 			return lastTimestampToDownload
+	raise Exception("Could not find run {}.{}".format(node, remoteRunId))
 
 if __name__ == "__main__":
 	pairs = RESTInterface.GetPairs()
