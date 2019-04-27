@@ -17,7 +17,7 @@ def FindBestCoveringRun(runs, pair, firstEvent, lastEvent):
 	coveringRuns = []
 	usableLengths = []
 	for run in runs:
-		if pair in run["pairs"] and run["firstTimestamp"] <= firstEvent and run["lastTimestamp"] >= lastEvent:
+		if pair in run["pairs"] and run["firstTimestamp"] < firstEvent and run["lastTimestamp"] > lastEvent:
 			coveringRuns.append(run)
 			usableLengths.append(run["lastTimestamp"] - firstEvent)
 	if len(coveringRuns) == 0:
