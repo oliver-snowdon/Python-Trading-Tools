@@ -82,7 +82,7 @@ def FillGap(database, pair, start, end, remoteRuns):
 						
 					if remoteCoveringRun != None and remoteCoveringRun['lastTimestamp']:
 						filledUpTo = AddRemoteRun(remoteCoveringRun["node"], remoteCoveringRun["remoteRunId"],
-									  sortedRemoteEventTimestamps[j]-1, sortedEventTimestamps[i+1]+1, pair, database)
+									  sortedRemoteEventTimestamps[j], sortedEventTimestamps[i+1]+1, pair, database)
 				
 		else:
 			print(coveringRun)
@@ -117,7 +117,8 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 			assert(firstTimestampToDownload < lastTimestampToDownload)
 			cursor = database.cnx.cursor()
 			maxLengthToDownload = 3600
-			for i in range(int(math.ceil((lastTimestampToDownload-firstTimestampToDownload)/maxLengthToDownload))):
+			nSections = int(math.ceil((lastTimestampToDownload-firstTimestampToDownload)/maxLengthToDownload))
+			for i in range(nSections):
 				firstTimestampInSection = firstTimestampToDownload + i * maxLengthToDownload
 				lastTimestampInSection = firstTimestampToDownload + (i+1) * maxLengthToDownload
 				if lastTimestampInSection > lastTimestampToDownload:
@@ -148,6 +149,8 @@ def AddRemoteRun(node, remoteRunId, startTimestamp, endTimestamp, pair, database
 				for trade in trades:
 					cursor.execute("INSERT INTO `trades` (`run_id`, `pair_id`, `price`, `amount`, `timestamp`, `buy_or_sell`, `market_or_limit`, `misc`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", (insertedRunId, pairIds[pair], trade["price"], trade["amount"], trade["timestamp"], trade["buy_or_sell"], trade["market_or_limit"], trade["misc"]))
 				database.cnx.commit()
+				if i == nSections-1:
+					assert(lastTimestampInSection == lastTimestampToDownload)
 			return lastTimestampToDownload
 	raise Exception("Could not find run {}.{}".format(node, remoteRunId))
 
