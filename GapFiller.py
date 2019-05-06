@@ -7,12 +7,6 @@ import Config
 import numpy as np
 import math
 
-def FindCoveringRun(runs, pair, firstEvent, lastEvent):
-	for run in runs:
-		if pair in run["pairs"] and run["firstTimestamp"] < firstEvent and run["lastTimestamp"] > lastEvent:
-			return run
-	return None
-
 def FindBestCoveringRun(runs, pair, firstEvent, lastEvent):
 	coveringRuns = []
 	usableLengths = []
@@ -20,10 +14,17 @@ def FindBestCoveringRun(runs, pair, firstEvent, lastEvent):
 		if pair in run["pairs"] and run["firstTimestamp"] < firstEvent and run["lastTimestamp"] > lastEvent:
 			coveringRuns.append(run)
 			usableLengths.append(run["lastTimestamp"] - firstEvent)
-	if len(coveringRuns) == 0:
-		return None
-	else:
+	if len(coveringRuns) > 0:
 		return coveringRuns[np.argsort(usableLengths)[-1]]
+		
+	for run in runs:
+		if pair in run["pairs"] and run["firstTimestamp"] <= firstEvent and run["lastTimestamp"] >= lastEvent:
+			coveringRuns.append(run)
+			usableLengths.append(run["lastTimestamp"] - firstEvent)
+	if len(coveringRuns) > 0:
+		return coveringRuns[np.argsort(usableLengths)[-1]]
+		
+	return None
 
 def FindCoveringRunInclusive(runs, pair, firstEvent, lastEvent):
 	for run in runs:
